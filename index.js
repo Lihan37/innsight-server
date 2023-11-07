@@ -33,7 +33,7 @@ async function run() {
 
         const roomsCollection = client.db('innSight').collection('rooms');
         const bookingCollection = client.db('innSight').collection('bookings');
-        
+
 
         app.get('/rooms', async (req, res) => {
             const cursor = roomsCollection.find();
@@ -41,14 +41,14 @@ async function run() {
             res.send(result);
         })
 
-        
+
 
         app.get('/rooms/:id', async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) }
 
-            const options ={
-                projection:{id:1, roomType:1, image:1, price: 1, description: 1, pricePerNight: 1, roomSize: 1, availability: 1, images: 1, specialOffers: 1, reviews: 1 }
+            const options = {
+                projection: { id: 1, roomType: 1, image: 1, price: 1, description: 1, pricePerNight: 1, roomSize: 1, availability: 1, images: 1, specialOffers: 1, reviews: 1 }
             }
 
             const result = await roomsCollection.findOne(query);
@@ -56,20 +56,27 @@ async function run() {
         })
 
         // bookings
-        app.get('/bookings', async(req, res)=>{
+        app.get('/bookings', async (req, res) => {
             console.log(req.query.email);
             let query = {};
-            if(req.query?.email){
-                query = {email: req.query.email}
+            if (req.query?.email) {
+                query = { email: req.query.email }
             }
             const result = await bookingCollection.find(query).toArray();
             res.send(result);
         })
 
-        app.post('/bookings', async(req, res)=>{
+        app.post('/bookings', async (req, res) => {
             const booking = req.body;
             console.log(booking);
             const result = await bookingCollection.insertOne(booking);
+            res.send(result);
+        })
+
+        app.delete('/bookings/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: new ObjectId(id) }
+            const result = await bookingCollection.deleteOne(query);
             res.send(result);
         })
 
