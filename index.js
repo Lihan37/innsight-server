@@ -32,12 +32,16 @@ async function run() {
 
 
         const roomsCollection = client.db('innSight').collection('rooms');
+        const bookingCollection = client.db('innSight').collection('bookings');
+        
 
         app.get('/rooms', async (req, res) => {
             const cursor = roomsCollection.find();
             const result = await cursor.toArray();
             res.send(result);
         })
+
+        
 
         app.get('/rooms/:id', async (req, res) => {
             const id = req.params.id;
