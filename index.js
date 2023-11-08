@@ -31,6 +31,28 @@ const client = new MongoClient(uri, {
     }
 });
 
+const logger = async(req, res, next)=>{
+    console.log('called:', req.host, req.originalUrl);
+    next()
+}
+
+const verifyToken = async(req, res, next)=>{
+    const token = req.cookies?.token;
+    console.log('value of token in middleware', token);
+    if(!token){
+        return res.status(401).send({message: 'not authorized'})
+    }
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded)=>{
+        if(err){
+            return res.status(401).send({message: 'unauthorized'})
+        }
+        console.log('value in the token', decoded)
+        req.user = decoded;
+        next()
+    })
+   
+}
+
 async function run() {
     try {
         // Connect the client to the server	(optional starting in v4.7)
@@ -42,7 +64,7 @@ async function run() {
 
         
         //auth related
-        app.post('/jwt', async(req, res)=>{
+        app.post('/jwt', logger, async(req, res)=>{
             const user = req.body;
             console.log(user);
             const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'});
@@ -56,7 +78,7 @@ async function run() {
         })
 
         // services related
-        app.get('/rooms', async (req, res) => {
+        app.get('/rooms', logger, async (req, res) => {
             const cursor = roomsCollection.find();
             const result = await cursor.toArray();
             res.send(result);
@@ -77,9 +99,13 @@ async function run() {
         })
 
         // bookings
-        app.get('/bookings', async (req, res) => {
+        app.get('/bookings', logger,verifyToken, async (req, res) => {
             console.log(req.query.email);
-            console.log('token', req.cookies.token);
+            // console.log('token', req.cookies.token);
+            console.log('from valid token',req.user);
+            if(req.query.email !== req.user.email){
+                return res.status(403).send({message: 'forbidden access'})
+            }
             let query = {};
             if (req.query?.email) {
                 query = { email: req.query.email }
